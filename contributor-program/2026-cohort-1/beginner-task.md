@@ -41,7 +41,7 @@ hf download openai/gsm8k main \
   --local-dir $DATA_DIR/gsm8k
 ```
 
-GSM8K 原始格式为 parquet，需转换为 JSONL（脚本头部有完整转换命令）。
+GSM8K 原始格式为 parquet，需转换为 JSONL。
 
 ### AIME 2024 评测集
 
