@@ -10,21 +10,11 @@
 #             = 100 × 4 × 4 / 16 = 100 steps
 #
 # Dataset: openai/gsm8k (~7.5K problems)
-#   — Download and convert to JSONL first:
-#       hf download openai/gsm8k main --repo-type dataset --local-dir /your/data/gsm8k
-#       python3 -c "
-#       import pandas as pd, json
-#       df = pd.read_parquet('/your/data/gsm8k/main/train-00000-of-00001.parquet')
-#       with open('/your/data/gsm8k/train.jsonl', 'w') as f:
-#           for _, r in df.iterrows():
-#               answer = r['answer'].split('####')[-1].strip()
-#               f.write(json.dumps({'question': r['question'], 'answer': answer}) + '\n')
-#       "
-#   — GSM8K answer field contains full reasoning ending with '#### <number>';
-#     the conversion extracts only the final number as the label.
+#   Requires JSONL conversion before use; see beginner-task.md for the conversion script.
+#   Expects: $DATA_DIR/gsm8k/train.jsonl with fields {question, answer}
 #
 # Usage:
-#   bash examples/quickstart/run-qwen3-0.6B-1xgpu-grpo.sh
+#   bash contributor-program/2026-cohort-1/run-qwen3-0.6B-1xgpu-grpo.sh
 #
 # Key overridable env vars:
 #   MODEL_DIR  - dir containing Qwen3-0.6B/

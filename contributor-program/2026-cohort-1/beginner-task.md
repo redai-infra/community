@@ -41,7 +41,17 @@ hf download openai/gsm8k main \
   --local-dir $DATA_DIR/gsm8k
 ```
 
-GSM8K 原始格式为 parquet，需转换为 JSONL。
+下载后为 parquet 格式，需转换为 JSONL。GSM8K 的 `answer` 字段包含完整解题过程（`...#### 42`），转换时只保留 `####` 后的数字作为标签：
+
+```python
+import pandas as pd, json
+
+df = pd.read_parquet("$DATA_DIR/gsm8k/main/train-00000-of-00001.parquet")
+with open("$DATA_DIR/gsm8k/train.jsonl", "w") as f:
+    for _, r in df.iterrows():
+        answer = r["answer"].split("####")[-1].strip()
+        f.write(json.dumps({"question": r["question"], "answer": answer}) + "\n")
+```
 
 ### AIME 2024 评测集
 
