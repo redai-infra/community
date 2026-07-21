@@ -46,8 +46,8 @@ hf download openai/gsm8k main \
 ```python
 import pandas as pd, json
 
-df = pd.read_parquet("$DATA_DIR/gsm8k/main/train-00000-of-00001.parquet")
-with open("$DATA_DIR/gsm8k/train.jsonl", "w") as f:
+df = pd.read_parquet("/your/data/gsm8k/main/train-00000-of-00001.parquet")
+with open("/your/data/gsm8k/train.jsonl", "w") as f:
     for _, r in df.iterrows():
         answer = r["answer"].split("####")[-1].strip()
         f.write(json.dumps({"question": r["question"], "answer": answer}) + "\n")
