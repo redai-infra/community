@@ -52,8 +52,8 @@ fi
 source "${MODEL_CONFIG_DIR}/qwen3-0.6B.sh"
 
 PROJECT_NAME="${PROJECT_NAME:=Relax/dev/beginner-task}"
-MODEL_DIR="${MODEL_DIR:-/mnt/tidal-nj01/usr/yuzhe1/relax_bhn/model}"
-DATA_DIR="${DATA_DIR:-/mnt/tidal-nj01/usr/yuzhe1/relax_bhn/data}"
+MODEL_DIR="${MODEL_DIR:-/your/model}"
+DATA_DIR="${DATA_DIR:-/your/data}"
 
 NUM_ROLLOUT="${NUM_ROLLOUT:=100}"
 ROLLOUT_BATCH_SIZE="${ROLLOUT_BATCH_SIZE:=4}"
