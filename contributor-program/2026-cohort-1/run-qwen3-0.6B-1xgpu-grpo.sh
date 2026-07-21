@@ -138,6 +138,8 @@ EVAL_ARGS=(
     --skip-eval-before-train
     --eval-interval 10
     --eval-prompt-data aime ${DATA_DIR}/aime-2024/aime-2024.jsonl
+    --eval-input-key prompt
+    --eval-label-key label
     --n-samples-per-eval-prompt 4
     --eval-max-response-len 2048
     --log-passrate
