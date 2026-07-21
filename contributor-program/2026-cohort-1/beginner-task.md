@@ -64,15 +64,6 @@ hf download AI-MO/aimo-validation-aime \
   → 每 10 步在 AIME-2024 上评测
 ```
 
-## 关键指标
-
-| 指标 | 说明 |
-|------|------|
-| `rollout/raw_reward` | 实际准确率（0/1），应从 ~0.5 开始上升 |
-| `rollout/rewards` | GRPO 归一化后永远 ~0，**正常现象** |
-| `train/pg_loss` | 策略梯度 loss，非零且趋势下降 |
-| `train/grad_norm` | 梯度范数，应稳定不爆炸 |
-
 ## 提交内容
 
 打包为 ZIP（以学校\_专业\_姓名命名）：
