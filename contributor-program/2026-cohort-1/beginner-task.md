@@ -11,18 +11,24 @@
 | 模型 | Qwen3-0.6B |
 | 训练集 | GSM8K |
 | 算法 | GRPO |
-| 硬件 | 1× GPU（H20 80GB） |
+| 硬件 | 1× GPU |
 | 预计耗时 | ~0.5 天，无需改代码 |
 
 ## 快速开始
 
 ```bash
 git clone https://github.com/redai-infra/Relax.git
+git clone https://github.com/redai-infra/community.git
+
+# 脚本依赖 Relax 目录结构（自解析根目录），需 cp 到 Relax/examples/ 下再跑
+mkdir -p Relax/examples/beginner-task
+cp community/contributor-program/2026-cohort-1/run-qwen3-0.6B-1xgpu-grpo.sh \
+   Relax/examples/beginner-task/
 cd Relax
 
 export MODEL_DIR=/your/model   # 存放 Qwen3-0.6B 的目录
-export DATA_DIR=/your/data     # 存放 gsm8k/ 和 aime-2024/ 的目录
-bash contributor-program/2026-cohort-1/run-qwen3-0.6B-1xgpu-grpo.sh
+export DATA_DIR=/your/data     # 存放 gsm8k/ 的目录
+bash examples/beginner-task/run-qwen3-0.6B-1xgpu-grpo.sh
 ```
 
 ## 准备数据
@@ -41,25 +47,7 @@ hf download openai/gsm8k main \
   --local-dir $DATA_DIR/gsm8k
 ```
 
-下载后为 parquet 格式，需转换为 JSONL：
-
-```python
-import pandas as pd, json
-
-df = pd.read_parquet("/your/data/gsm8k/main/train-00000-of-00001.parquet")
-with open("/your/data/gsm8k/train.jsonl", "w") as f:
-    for _, r in df.iterrows():
-        answer = r["answer"].split("####")[-1].strip()
-        f.write(json.dumps({"question": r["question"], "answer": answer}) + "\n")
-```
-
-### AIME 2024 评测集
-
-```bash
-hf download AI-MO/aimo-validation-aime \
-  --repo-type dataset \
-  --local-dir $DATA_DIR/aime-2024
-```
+下载后即为 parquet 格式。脚本首次运行时会自动预处理（把 `answer` 字段的 CoT 剥掉，只保留 `####` 后的最终答案），生成 `main/train_clean.parquet` 并使用之，无需手动转换。
 
 ## 训练流程
 
@@ -71,7 +59,6 @@ hf download AI-MO/aimo-validation-aime \
   → Reward 计算（math rm-type，提取 \boxed{}）
   → GRPO 优势估计 + 策略更新
   → 指标记录（ClearML）
-  → 每 10 步在 AIME-2024 上评测
 ```
 
 ## 提交内容

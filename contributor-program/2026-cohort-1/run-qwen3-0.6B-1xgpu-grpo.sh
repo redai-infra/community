@@ -2,29 +2,29 @@
 
 # Copyright (c) 2026 Relax Authors. All Rights Reserved.
 #
-# Qwen3-0.6B 1xGPU GRPO quickstart — GSM8K train, AIME-2024 eval.
+# Qwen3-0.6B 1xGPU GRPO quickstart — GSM8K train only (no eval).
 #
 # Colocate mode: actor and rollout time-share the same GPU.
 #
 # train_iters = NUM_ROLLOUT × ROLLOUT_BATCH_SIZE × N_SAMPLES / GLOBAL_BATCH_SIZE
 #             = 100 × 4 × 4 / 16 = 100 steps
 #
-# Dataset: openai/gsm8k (~7.5K problems)
-#   Requires JSONL conversion before use; see beginner-task.md for the conversion script.
-#   Expects: $DATA_DIR/gsm8k/train.jsonl with fields {question, answer}
+# Dataset: openai/gsm8k (7473 problems)
+#   Script normalizes the `answer` field (strips CoT, keeps only the number after ####)
+#   into $DATA_DIR/gsm8k/main/train_clean.parquet on first run.
+#   Original parquet answer is "推导全文 + #### 72"; math rm-type needs bare "72".
 #
 # Usage:
 #   bash contributor-program/2026-cohort-1/run-qwen3-0.6B-1xgpu-grpo.sh
 #
 # Key overridable env vars:
 #   MODEL_DIR  - dir containing Qwen3-0.6B/
-#   DATA_DIR   - dir containing gsm8k/train.jsonl and aime-2024/aime-2024.jsonl
+#   DATA_DIR   - dir containing gsm8k/main/train-00000-of-00001.parquet
 #
 # Metrics to watch in ClearML:
 #   rollout/raw_reward   — accuracy 0/1 (expect ~0.5–0.7 initial on GSM8K, rising over training)
 #   train/pg_loss        — policy gradient loss (non-zero and decreasing)
 #   train/grad_norm      — gradient norm (stable, not exploding)
-#   eval/aime-2024-pass@1 — AIME-2024 passrate every 10 steps
 #   NOTE: rollout/rewards and rollout/advantages are GRPO-normalized and will
 #         always hover near 0 — this is correct behavior, not a bug.
 
@@ -45,6 +45,18 @@ PROJECT_NAME="${PROJECT_NAME:=Relax/dev/beginner-task}"
 MODEL_DIR="${MODEL_DIR:-/your/model}"
 DATA_DIR="${DATA_DIR:-/your/data}"
 
+GSM8K_RAW="${DATA_DIR}/gsm8k/main/train-00000-of-00001.parquet"
+GSM8K_CLEAN="${DATA_DIR}/gsm8k/main/train_clean.parquet"
+if [ ! -f "${GSM8K_CLEAN}" ]; then
+    python3 - <<EOF
+import pandas as pd
+df = pd.read_parquet("${GSM8K_RAW}")
+df["answer"] = df["answer"].str.split("####").str[-1].str.strip()
+df.to_parquet("${GSM8K_CLEAN}", index=False)
+print(f"Wrote {len(df)} rows to ${GSM8K_CLEAN}")
+EOF
+fi
+
 NUM_ROLLOUT="${NUM_ROLLOUT:=100}"
 ROLLOUT_BATCH_SIZE="${ROLLOUT_BATCH_SIZE:=4}"
 N_SAMPLES="${N_SAMPLES:=8}"
@@ -59,7 +71,7 @@ CKPT_ARGS=(
 )
 
 ROLLOUT_ARGS=(
-    --prompt-data ${DATA_DIR}/gsm8k/train.jsonl
+    --prompt-data ${GSM8K_CLEAN}
     --input-key question
     --label-key answer
     --apply-chat-template
@@ -124,17 +136,6 @@ WANDB_ARGS=(
     --tb-experiment-name qwen3-0.6b-GRPO-gsm8k-1xgpu-${now}
 )
 
-EVAL_ARGS=(
-    --skip-eval-before-train
-    --eval-interval 10
-    --eval-prompt-data aime ${DATA_DIR}/aime-2024/aime-2024.jsonl
-    --eval-input-key prompt
-    --eval-label-key label
-    --n-samples-per-eval-prompt 4
-    --eval-max-response-len 2048
-    --log-passrate
-)
-
 MISC_ARGS=(
     --attention-dropout 0.0
     --hidden-dropout 0.0
@@ -156,7 +157,6 @@ ray job submit ${RAY_NO_WAIT:+--no-wait} --address="http://127.0.0.1:8265" \
     "${MODEL_ARGS[@]}" \
     "${CKPT_ARGS[@]}" \
     "${ROLLOUT_ARGS[@]}" \
-    "${EVAL_ARGS[@]}" \
     "${OPTIMIZER_ARGS[@]}" \
     "${GRPO_ARGS[@]}" \
     "${WANDB_ARGS[@]}" \
